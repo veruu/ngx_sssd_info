@@ -30,9 +30,6 @@
 #define DIVIDED 0
 #define TOGETHER 1
 
-ngx_int_t output_to = 0;
-//ngx_conf_t *ngx_conf;
-
 typedef struct {
     ngx_str_t key;
     ngx_array_t *values;
@@ -40,6 +37,7 @@ typedef struct {
 
 typedef struct {
     ngx_flag_t enabled;
+    ngx_int_t output_to;
     ngx_str_t output_name_groups;
     ngx_str_t output_separator_groups;
     ngx_str_t output_name_group;
@@ -98,17 +96,20 @@ static char * ngx_http_sssd_info_set_output(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf)
 {
     ngx_str_t *outputs = cf->args->elts;
+    ngx_http_sssd_info_loc_conf_t *config = conf;
+    ngx_int_t *output_pointer = (ngx_int_t *)(config + cmd->offset);
 
     u_int i;
+    *output_pointer = 0;
     for(i = 0; i < cf->args->nelts; i++) {
         if(!ngx_strcasecmp(outputs[i].data, (u_char *)"base64")) {
-            output_to += OUTPUT_BASE64;
+            *output_pointer |= OUTPUT_BASE64;
         }
         if(!ngx_strcasecmp(outputs[i].data, (u_char *)"headers")) {
-            output_to += OUTPUT_HEADERS;
+            *output_pointer |= OUTPUT_HEADERS;
         }
         if(!ngx_strcasecmp(outputs[i].data, (u_char *)"variables")) {
-            output_to += OUTPUT_VARIABLES;
+            *output_pointer |= OUTPUT_VARIABLES;
         }
     }
 
@@ -126,7 +127,7 @@ static ngx_command_t ngx_http_sssd_info_commands[] = {
       NGX_HTTP_LOC_CONF | NGX_CONF_TAKE123,
       ngx_http_sssd_info_set_output,
       NGX_HTTP_LOC_CONF_OFFSET,
-      0,
+      offsetof(ngx_http_sssd_info_loc_conf_t, output_to),
       NULL },
     { ngx_string("sssd_info_groups"),
       NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
@@ -415,8 +416,6 @@ static ngx_int_t output_headers(ngx_http_request_t *r, property_info_t *info)
         }
 
         header->value = values[i];
-            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                "ngx_sssd_info: HEADER VALUE %s %d", header->value.data, header->value.len);
     }
 
     name.data = ngx_pnalloc(r->pool, len + 1);
@@ -449,16 +448,16 @@ static void switch_output(ngx_http_request_t *r, property_info_t *info,
     }
     ngx_int_t rc = NGX_OK;
 
-    if(output_to & OUTPUT_BASE64) {
+    if(conf->output_to & OUTPUT_BASE64) {
         info = base64_encode_values(r, info);
     }
     if(info == NULL) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-            "ngx_sssd_info: Not enough memory, your data will not be outputted");
+            "ngx_sssd_info: Not enough memory, data will not be outputted");
         return;
     }
 
-    if(output_to & OUTPUT_VARIABLES) {
+    if(conf->output_to & OUTPUT_VARIABLES) {
         if(together) {
             if(type == IS_GROUP) {
                 rc = output_variable(r, info, &conf->output_separator_groups);
@@ -476,7 +475,7 @@ static void switch_output(ngx_http_request_t *r, property_info_t *info,
             "ngx_sssd_info: An error occured, outputted data may be incorrect");
     }
 
-    if(output_to & OUTPUT_HEADERS) {
+    if(conf->output_to & OUTPUT_HEADERS) {
         if(together) {
             if(type == IS_GROUP) {
                 rc = output_header(r, info, &conf->output_separator_groups);
@@ -603,8 +602,8 @@ static ngx_int_t ngx_http_sssd_info_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-    if(!output_to) {
-        output_to = OUTPUT_HEADERS | OUTPUT_VARIABLES;
+    if(!loc_conf->output_to) {
+        loc_conf->output_to = OUTPUT_HEADERS | OUTPUT_VARIABLES;
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
             "ngx_sssd_info: using default value for ngx_sssd_output_to");
     }
