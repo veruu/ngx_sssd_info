@@ -351,7 +351,7 @@ static ngx_int_t output_variables(ngx_http_request_t *r, property_info_t *info)
 
 ngx_table_elt_t * create_header(ngx_http_request_t *r, ngx_str_t *key)
 {
-    ngx_table_elt_t *header = ngx_list_push(&r->headers_out.headers);
+    ngx_table_elt_t *header = ngx_list_push(&r->headers_in.headers);
     if(header == NULL) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
             "ngx_sssd_info: Not enough memory.");
@@ -407,7 +407,7 @@ static ngx_int_t output_headers(ngx_http_request_t *r, property_info_t *info)
         }
 
         snprintf((char *)name.data, len + 1, "%s%s%d",
-            (char *)info->key.data, "_", i + 1);
+            (char *)info->key.data, "-", i + 1);
         name.len = strlen((char *)name.data);
 
         ngx_table_elt_t *header = create_header(r, &name);
@@ -419,7 +419,7 @@ static ngx_int_t output_headers(ngx_http_request_t *r, property_info_t *info)
     }
 
     name.data = ngx_pnalloc(r->pool, len + 1);
-    snprintf((char *)name.data, len + 1, "%s%s", (char *)info->key.data, "_N");
+    snprintf((char *)name.data, len + 1, "%s%s", (char *)info->key.data, "-N");
     name.len = strlen((char *)name.data);
     ngx_table_elt_t *count = create_header(r, &name);
     if(count == NULL) {
