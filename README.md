@@ -57,6 +57,8 @@ Example configuration with [ngx_form_auth](https://github.com/veruu/ngx_form_aut
         proxy_pass http://127.0.0.1:8888/backend/login/;
     }
 
+If you want to output to headers, use `-` instead of `_`.
+
 
 Debugging information and troubleshooting
 -----------------------------------------
