@@ -27,7 +27,7 @@ Installation
 Configuration
 -------------
 * `sssd_info`: on | off: for enabling / disabling the module
-* `sssd_info_output_to`: base64 | variables | headers: any combination of these values; specify whether the values should be BASE64 encoded and where to output them. Default value is "variables" "headers", *Use only once per whole nginx.conf*
+* `sssd_info_output_to`: base64 | variables | headers: any combination of these values; specify whether the values should be BASE64 encoded and where to output them. Default value is "variables" "headers"
 * `sssd_info_groups`: name of a variable / header to which output user groups
 * `sssd_info_group`: name of a variable / header to which output user groups one by one
 * `sssd_info_group_separator`: string that divided group name outputted to `sssd_info_groups`, default is ":"
