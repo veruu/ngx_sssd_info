@@ -632,7 +632,7 @@ static ngx_int_t ngx_http_sssd_info_handler(ngx_http_request_t *r)
             reply = sssd_dbus_message(r, connection, &error,
                 DBUS_SSSD_TIMEOUT, DBUS_SSSD_GET_USER_GROUPS_METHOD, NULL);
 
-            ngx_int_t count;
+            ngx_uint_t count = 0;
             char **ptr;
             if(reply && dbus_message_get_args(reply, &error, DBUS_TYPE_ARRAY,
                 DBUS_TYPE_STRING, &ptr, &count, DBUS_TYPE_INVALID)) {
